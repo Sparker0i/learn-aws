@@ -2,48 +2,66 @@
 
 Goal: get Floci running reliably on Apple Silicon, build the account/region/ARN/endpoint mental model, and script a reusable smoke test — before phase 01 touches IAM. Budget: 5–8 hrs.
 
-## 0.1 — Prerequisites (~15 min)
+## 0.1 — Prerequisites (~20 min)
 
-- Docker Desktop running, Apple Silicon (arm64) build, with the Docker socket available at `/var/run/docker.sock`.
+- Podman Desktop installed, with a rootless Podman machine initialized and running on Apple Silicon (arm64).
 - AWS CLI v2 installed (`brew install awscli`) — Floci speaks the real wire protocol, so the real CLI is what you use.
 - `jq` installed (`brew install jq`) — useful for reading CLI JSON output in the smoke test script.
 
 Check:
 
 ```bash
-docker --version
+podman --version
 aws --version
 jq --version
+podman machine list
 ```
 
-## 0.2 — Run Floci (~20 min)
+If no machine shows as `Currently running`, initialize and start one (rootless is the default — no `--rootful` flag):
 
 ```bash
-docker run -d --name floci \
+podman machine init
+podman machine start
+```
+
+**Rootless, and why it matters here:** Floci needs to launch sibling containers (Lambda, RDS, ECS, EKS, MSK, ElastiCache, OpenSearch, DocumentDB, ECR) by talking to a container-engine socket mounted inside its own container. Docker Desktop exposes `/var/run/docker.sock` for this directly. Rootless Podman does the equivalent through a per-user socket inside the Podman machine's Linux VM, not at that fixed path — so the mount step below is different from what Floci's own docs assume, and worth doing deliberately rather than skimming.
+
+## 0.2 — Run Floci (~25 min)
+
+Rootless Podman's socket lives at a machine-specific path, not `/var/run/docker.sock`. Resolve it, then mount it into the container at the path Floci's internal Docker SDK client expects:
+
+```bash
+SOCK=$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')
+echo "$SOCK"   # sanity-check it's non-empty before using it below
+
+podman run -d --name floci \
   -p 4566:4566 \
-  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "$SOCK":/var/run/docker.sock \
   floci/floci:latest
 ```
 
-- `-d` detached so it stays up across your session; `--name floci` so you can `docker logs -f floci` easily.
-- The Docker-socket mount is required — Floci uses it to launch the real containers backing Lambda, RDS, ECS, EKS, MSK, ElastiCache, OpenSearch, DocumentDB, and ECR. Without it, only the in-process/emulated services (S3, DynamoDB, SQS, SNS, IAM, Step Functions, CloudFormation, EventBridge, Cognito, and most others) will work.
+- `-d` detached so it stays up across your session; `--name floci` so you can `podman logs -f floci` easily.
+- The socket mount is required — without it, only the in-process/emulated services (S3, DynamoDB, SQS, SNS, IAM, Step Functions, CloudFormation, EventBridge, Cognito, and most others) will work; anything Docker-backed (Lambda, RDS, ECS, EKS, MSK, ElastiCache) will fail to start.
+- Alternative: Podman Desktop's **Settings → Preferences → Docker Compatibility** toggle aims to make Podman answer at the conventional Docker socket location, which would let you skip the `SOCK=` resolution step. It wasn't verified for this roadmap — try the explicit mount above first, and treat the toggle as a shortcut to test once the explicit version is confirmed working, not a replacement for understanding it.
 
 Verify it's up:
 
 ```bash
-docker logs floci --tail 30
+podman logs floci --tail 30
 curl -s http://localhost:4566/_localstack/health 2>/dev/null || curl -s http://localhost:4566/ -o /dev/null -w "%{http_code}\n"
 ```
 
-**Apple Silicon watch-item:** the first time you exercise a Docker-backed service (RDS, EKS/k3s, MSK), Floci pulls that backing image on demand. On arm64 this can take noticeably longer than on x86 for images without a pre-warmed arm64 layer cache locally. If a container never reports healthy, run `docker ps -a` to find it and `docker logs <container>` to check whether it's still pulling vs. actually failing. Don't debug phase 01+ issues here — confirm image pulls succeed once, up front, for the services you'll use in phases 03/05/06 (ECS, EKS, RDS, MSK), so you're not debugging Floci and your own code at the same time later.
+**Floci-on-rootless-Podman gotcha:** Floci is written and tested against Docker Desktop's socket and networking model. Rootless Podman's user-namespace remapping and rootless networking (slirp4netns/pasta) differ from Docker's default bridge networking in ways that mostly don't matter for a single container, but can surface as sibling-container problems here specifically — a Docker-backed service's container starts but can't be reached, or fails to start with a permissions error tied to UID remapping. If a Docker-backed service (03/05/06) misbehaves and the AWS-level command looks correct, check `podman ps -a` and `podman logs <container>` on the *sibling* container before assuming your own code is wrong — this combination is less common than Docker Desktop, so expect occasional troubleshooting here rather than clean parity.
+
+**Apple Silicon watch-item:** the first time you exercise a Docker-backed service (RDS, EKS/k3s, MSK), Floci pulls that backing image on demand, inside the Podman machine's Linux VM. On arm64 this can take noticeably longer than on x86 for images without a pre-warmed arm64 layer cache locally. If a container never reports healthy, run `podman ps -a` to find it and `podman logs <container>` to check whether it's still pulling vs. actually failing. Don't debug phase 01+ issues here — confirm image pulls succeed once, up front, for the services you'll use in phases 03/05/06 (ECS, EKS, RDS, MSK), so you're not debugging Floci and your own code at the same time later.
 
 ```bash
-docker pull --platform linux/arm64 rancher/k3s:latest
-docker pull --platform linux/arm64 postgres:16
-docker pull --platform linux/arm64 mysql:8
+podman machine ssh -- podman pull --platform linux/arm64 rancher/k3s:latest
+podman machine ssh -- podman pull --platform linux/arm64 postgres:16
+podman machine ssh -- podman pull --platform linux/arm64 mysql:8
 ```
 
-If any of these only have an amd64 manifest, Docker Desktop's Rosetta emulation will still run them (slower, but functional) — you'll notice this as a one-time slow startup rather than a hard failure.
+Run these inside the machine (`podman machine ssh --`) rather than from the host, since that's the same container runtime Floci itself will use to launch these images. If any of these only have an amd64 manifest, the Podman machine's Linux VM will still run them via emulation (slower, but functional) — you'll notice this as a one-time slow startup rather than a hard failure.
 
 ## 0.3 — Configure the AWS CLI profile (~15 min)
 
@@ -147,7 +165,7 @@ chmod +x smoke-test.sh
 
 You're ready for phase 01 (IAM basics) when:
 
-- [ ] `docker ps` shows the Floci container healthy and staying up without restarts
+- [ ] `podman ps` shows the Floci container healthy and staying up without restarts
 - [ ] `smoke-test.sh` passes clean, end to end, with no manual intervention
 - [ ] You've pre-pulled the arm64 images for k3s/Postgres/MySQL so phase 03/05 don't stall on a first-pull
 - [ ] You have a `floci` CLI profile you source deliberately (not a global default), and you understand the account/region/ARN mapping well enough to explain it back without looking it up
@@ -156,4 +174,4 @@ You're ready for phase 01 (IAM basics) when:
 ## Notes for the rest of the roadmap
 
 - Re-run `smoke-test.sh` at the start of every future phase. If it fails, you're debugging Floci, not your code that day — don't conflate the two.
-- Keep `docker logs -f floci` in a side terminal during phases 03 (Compute), 05 (Databases), and 06 (Messaging) the first time you touch each new Docker-backed service — that's where you'll actually see image-pull or container-boot problems as they happen, rather than as an opaque CLI timeout.
+- Keep `podman logs -f floci` in a side terminal during phases 03 (Compute), 05 (Databases), and 06 (Messaging) the first time you touch each new Docker-backed service — that's where you'll actually see image-pull or container-boot problems as they happen, rather than as an opaque CLI timeout. If Floci's own log looks fine but the service still misbehaves, check the sibling container directly (`podman ps -a`, `podman logs <container>`) — with rootless Podman that's a more likely failure point than it would be under Docker Desktop.

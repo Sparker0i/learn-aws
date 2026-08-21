@@ -10,10 +10,12 @@ Practiced entirely locally against [Floci](https://floci.io) (`floci/floci:lates
 - **Compute (03)** comes before storage/databases/messaging because ECS and EKS are the shortest path from what you already know (containers, Kubernetes) to a working deployment — that early win anchors everything else.
 - **Networking/VPC (07)** is deliberately placed *after* compute and data, once you have real resources that need to talk to each other, so subnets and security groups have something concrete to attach to. It's also the phase with the weakest Floci fidelity — see its gap note below.
 
-Day 0 setup:
+Day 0 setup (rootless Podman Desktop — see phase 00 for the full walkthrough):
 
 ```bash
-docker run --rm -p 4566:4566 -v /var/run/docker.sock:/var/run/docker.sock floci/floci:latest
+podman machine start
+SOCK=$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')
+podman run --rm -p 4566:4566 -v "$SOCK":/var/run/docker.sock floci/floci:latest
 ```
 
 Endpoint: `http://localhost:4566` · credentials: any non-empty values (e.g. `test`/`test`) · region: any, defaults to `us-east-1`.
@@ -36,7 +38,9 @@ Get the emulator running and build the account/region/ARN mental model before to
 
 **Floci-specific tip:** a 12-digit `AWS_ACCESS_KEY_ID` gives you isolated "accounts" inside one Floci instance — useful later for practicing cross-account IAM roles, a real job-relevant pattern most tutorials skip.
 
-**Apple Silicon note:** Floci's own image is multi-arch, but the containers it launches on your behalf (Postgres/MySQL for RDS, k3s for EKS, Kafka for MSK) need arm64 pulls. Most official images have them — expect a slower first pull per service and check `docker logs` if a container never reports healthy.
+**Apple Silicon note:** Floci's own image is multi-arch, but the containers it launches on your behalf (Postgres/MySQL for RDS, k3s for EKS, Kafka for MSK) need arm64 pulls. Most official images have them — expect a slower first pull per service and check `podman logs` if a container never reports healthy.
+
+**Podman-specific note:** Floci's socket integration is written and tested against Docker Desktop. Mounting rootless Podman's socket at the container's expected `/var/run/docker.sock` path gets you API compatibility, but rootless Podman's user-namespace remapping and rootless networking (slirp4netns/pasta) behave differently enough from Docker's default bridge networking that sibling-container issues (RDS, EKS/k3s, MSK, ECS backing containers failing to start or reach the host) are more likely here than they'd be on Docker Desktop — see phase 00 for the workaround-first approach.
 
 **Hands-on:** stand up Floci, wire the CLI profile, and script a 5-line smoke test (`sts get-caller-identity` → create a bucket → list it → delete it) you'll reuse to sanity-check every future phase.
 
