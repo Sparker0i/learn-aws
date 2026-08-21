@@ -127,6 +127,7 @@ set -euo pipefail
 
 export AWS_PROFILE=floci
 export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_PAGER=""
 
 echo "== identity =="
 aws sts get-caller-identity
@@ -153,6 +154,8 @@ aws dynamodb delete-table --table-name "$TABLE" >/dev/null
 
 echo "ALL OK"
 ```
+
+**Why `AWS_PAGER=""`:** the AWS CLI v2 pipes any command's output through `less` by default when run in a terminal — `get-caller-identity` and `get-item` both trigger it. Without disabling it, the script appears to hang on a full-screen pager after each of those calls until you press `q`, which defeats the point of a script you run unattended. Setting `AWS_PAGER=""` once here (rather than adding `--no-cli-pager` to every command) is the standard fix and carries into every later phase's scripts too.
 
 Save it as `smoke-test.sh`, `chmod +x smoke-test.sh`, and commit it to the repo — it's infrastructure for the rest of the roadmap, not throwaway scratch work.
 

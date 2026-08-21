@@ -1,8 +1,9 @@
-#!/usr/bin/env/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 export AWS_PROFILE=floci
 export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_PAGER=""
 
 echo "== Identity =="
 aws sts get-caller-identity
