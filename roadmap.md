@@ -62,7 +62,7 @@ Learn identity and policy structure now — every later phase hands you a "which
 
 **Hands-on:** create a role + policy scoped to one S3 bucket only, assume it via `sts assume-role`, confirm calls against a second bucket are denied. Then broaden the policy to `Resource: "*"` and confirm the difference.
 
-**Floci gap:** IAM enforcement is implemented in-process across most services, but coverage isn't uniform — the project's own docs note some services accept a policy but treat it as inert. Don't treat "Floci let it through" as proof a policy is correctly scoped; re-check anything security-sensitive against a real AWS account.
+**Floci gap:** IAM enforcement is implemented in-process across most services, but coverage isn't uniform — the project's own docs note some services accept a policy but treat it as inert. **Confirmed hands-on:** an explicit `Deny` on `s3:DeleteObject` is accepted into the policy document but not enforced — the delete succeeds anyway. Don't treat "Floci let it through" as proof a policy is correctly scoped, and don't trust any deny-shaped test (scoped-down Allow *or* explicit Deny) as validated until you re-check it against a real AWS account.
 
 ---
 

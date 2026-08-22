@@ -163,12 +163,12 @@ echo "-- assumed role -> put object in bucket B (expect: succeeds, Allow covers 
 AWS_ACCESS_KEY_ID="$AK" AWS_SECRET_ACCESS_KEY="$SK" AWS_SESSION_TOKEN="$ST" \
   aws s3 cp /tmp/trust-policy.json "s3://$BUCKET_B/scratch.json"
 
-echo "-- assumed role -> delete that object (expect: AccessDenied, explicit Deny wins) --"
+echo "-- assumed role -> delete that object (on real AWS: AccessDenied, explicit Deny wins) --"
 AWS_ACCESS_KEY_ID="$AK" AWS_SECRET_ACCESS_KEY="$SK" AWS_SESSION_TOKEN="$ST" \
   aws s3 rm "s3://$BUCKET_B/scratch.json"
 ```
 
-The delete failing here — despite `Resource: "*"` on the Allow statement — is the whole lesson: `Deny` isn't "lower priority than Allow," it's absolute. There's no k8s RBAC equivalent to reach for; this has to be rebuilt as its own mental model.
+**Confirmed Floci gap, not a hypothetical:** on real AWS, the delete above fails — `Deny` isn't "lower priority than Allow," it's absolute, and there's no k8s RBAC equivalent to reach for; this has to be rebuilt as its own mental model. On Floci as tested for this roadmap, the delete **succeeds anyway** — the explicit `Deny` statement is accepted into the policy document but not enforced against `s3:DeleteObject`. This is the concrete instance of the enforcement-gap warning below, not just a caveat to keep in mind: don't treat a successful delete here as "my policy JSON is wrong." The policy is correct; Floci just isn't the thing to trust for this specific case. Re-verify explicit-Deny behavior against a real AWS account before relying on it in a production policy.
 
 ## 1.5 — Users vs roles, briefly (~15 min, no hands-on required)
 
@@ -221,16 +221,18 @@ Then, as account A, assume it — same `sts assume-role` call as 1.2, just with 
 
 ## Floci gap: don't trust silence as proof
 
-Floci's IAM is implemented in-process across most services, but the project's own documentation notes coverage isn't uniform — some services accept a policy but treat it as inert rather than enforcing it. If 1.2's "expect: AccessDenied" call unexpectedly succeeded, that's the most likely explanation, not a mistake in your JSON. Two ways to build confidence anyway:
+Floci's IAM is implemented in-process across most services, but the project's own documentation notes coverage isn't uniform — some services accept a policy but treat it as inert rather than enforcing it. **Confirmed while building this exercise:** explicit `Deny` on `s3:DeleteObject` (1.4) is accepted into the policy document without error but not actually enforced — the delete succeeds regardless. If 1.2's "expect: AccessDenied" call for the scoped-down role also unexpectedly succeeded, treat that as the same class of gap, not a mistake in your JSON.
 
-- The **positive** cases (broadening a policy and gaining access, adding an explicit Deny and losing access) are the ones worth trusting from Floci — they demonstrate the policy language behaving correctly.
-- The **negative baseline** (a scoped-down policy actually blocking something) is the one worth re-verifying against a real AWS account before you'd call a production policy correctly scoped — the same caution the roadmap flags again at phases 07 and 09.
+What's actually safe to trust from Floci, updated for what we now know:
+
+- **Allow-based scoping** (1.3: broadening `Resource` and watching previously-denied access start working) is a trustworthy positive signal — it's a pure Allow test with no Deny statement involved.
+- **Any test whose expected outcome is a denial** — a scoped-down Allow blocking an out-of-scope resource (1.2), or an explicit Deny blocking an otherwise-allowed action (1.4) — is not reliable on Floci as tested here. Write and reason about deny-shaped policies with confidence; just don't use Floci's response as proof they're enforced. Re-verify against a real AWS account before trusting a production policy that depends on either pattern — the same caution the roadmap flags again at phases 07 and 09.
 
 ## Exit criteria for phase 01
 
 - [ ] Built a role scoped to one bucket and (either confirmed the second bucket was denied, or confirmed Floci let it through and understood why per the gap note above)
 - [ ] Broadened the policy and watched previously-denied access start working
-- [ ] Demonstrated an explicit `Deny` overriding a broader `Allow`
+- [ ] Ran the explicit-Deny-vs-Allow test and can explain the result either way — enforced (real-AWS parity) or not (confirmed Floci gap, see note above) — without treating either outcome as a policy-writing mistake
 - [ ] Can explain the trust-policy vs permission-policy split out loud, without looking it up
 - [ ] Cleaned up the role, policies, and buckets
 - [ ] (Optional) completed the cross-account stretch goal
