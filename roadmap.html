@@ -1,0 +1,842 @@
+<title>Route &amp; Ship</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F3F4F1;
+    --surface: #FFFFFF;
+    --surface-2: #EAEBE6;
+    --border: #DCDED7;
+    --ink: #1B2029;
+    --ink-soft: #4B5563;
+    --ink-faint: #8A9099;
+    --accent: #C4692B;
+    --accent-soft: #F1DFCB;
+    --track-aws: #2A6F97;
+    --track-aws-soft: #DCE9F0;
+    --track-ai: #0F8B8D;
+    --track-ai-soft: #D8ECEC;
+    --track-go: #6B5CA5;
+    --track-go-soft: #E6E1F2;
+    --shadow: rgba(27,32,41,0.10);
+
+    --font-display: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-body: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151A;
+      --surface: #1A1E26;
+      --surface-2: #20242D;
+      --border: #2C313C;
+      --ink: #E8E9E4;
+      --ink-soft: #A3A9B4;
+      --ink-faint: #6B7280;
+      --accent: #E08A46;
+      --accent-soft: #3A2A1C;
+      --track-aws: #6FA8C9;
+      --track-aws-soft: #1E2E38;
+      --track-ai: #4FC1C0;
+      --track-ai-soft: #17302F;
+      --track-go: #A79BD1;
+      --track-go-soft: #29243B;
+      --shadow: rgba(0,0,0,0.45);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #12151A;
+    --surface: #1A1E26;
+    --surface-2: #20242D;
+    --border: #2C313C;
+    --ink: #E8E9E4;
+    --ink-soft: #A3A9B4;
+    --ink-faint: #6B7280;
+    --accent: #E08A46;
+    --accent-soft: #3A2A1C;
+    --track-aws: #6FA8C9;
+    --track-aws-soft: #1E2E38;
+    --track-ai: #4FC1C0;
+    --track-ai-soft: #17302F;
+    --track-go: #A79BD1;
+    --track-go-soft: #29243B;
+    --shadow: rgba(0,0,0,0.45);
+  }
+
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .hero h1 { font-size: clamp(2.1rem, 5vw, 2.9rem); font-weight: 700; letter-spacing: -0.01em; }
+  .dek {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 16px 0 0;
+  }
+
+  .stats-bar {
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 360px;
+  }
+  .stat { display: flex; align-items: baseline; gap: 10px; }
+  .stat-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .stat-label { font-family: var(--font-display); font-size: 0.82rem; color: var(--ink-faint); }
+  .progress-track {
+    height: 6px;
+    background: var(--surface-2);
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.25s ease;
+  }
+
+  /* ---------- Principle callout ---------- */
+  .principle-callout {
+    margin: 32px 0;
+    padding: 18px 20px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+  }
+  .principle-callout .eyebrow { color: var(--accent); }
+  .principle-callout p:last-child { margin: 0; color: var(--ink); font-size: 0.98rem; }
+
+  /* ---------- Architecture ---------- */
+  .architecture { margin: 44px 0; }
+  .architecture h2 { font-size: 1.4rem; margin-bottom: 6px; }
+  .architecture .sub { color: var(--ink-soft); font-size: 0.95rem; margin: 0 0 20px; max-width: 62ch; }
+  .diagram-wrap {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+  }
+  .diagram-wrap svg { display: block; min-width: 640px; width: 100%; height: auto; }
+  .node-rect { fill: var(--surface); stroke-width: 1.6; }
+  .node-title { font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; fill: var(--ink); }
+  .node-sub { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-faint); }
+  .edge { stroke: var(--ink-faint); stroke-width: 1.4; fill: none; }
+  .edge-label { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-faint); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-soft); }
+  .legend-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+  /* ---------- Timeline nav ---------- */
+  .timeline-nav {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin: 40px 0;
+    list-style: none;
+    padding: 0;
+  }
+  .timeline-nav a {
+    display: block;
+    text-decoration: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 8px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .timeline-nav a:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .timeline-nav .tn-phase { font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+  .timeline-nav .tn-weeks { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; display: block; margin-top: 2px; }
+  .tn-dots { display: flex; gap: 4px; margin-top: 8px; }
+  .tn-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* ---------- Phase cards ---------- */
+  .phase {
+    margin: 28px 0;
+    padding: 26px 26px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    scroll-margin-top: 20px;
+  }
+  .phase-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 14px;
+    margin-bottom: 6px;
+  }
+  .phase-number { font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+  .phase-weeks { font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .phase h3 { font-size: 1.3rem; flex-basis: 100%; margin-top: 2px; }
+  .pills { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 4px; }
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+  .pill-aws { background: var(--track-aws-soft); color: var(--track-aws); }
+  .pill-ai { background: var(--track-ai-soft); color: var(--track-ai); }
+  .pill-go { background: var(--track-go-soft); color: var(--track-go); }
+
+  .phase-focus { color: var(--ink-soft); margin: 12px 0 18px; max-width: 68ch; }
+
+  .track-block { margin-bottom: 14px; }
+  .track-block h4 {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .track-block h4::before { content: ''; width: 7px; height: 7px; border-radius: 2px; display: inline-block; }
+  .track-block.tb-aws h4::before { background: var(--track-aws); }
+  .track-block.tb-ai h4::before { background: var(--track-ai); }
+  .track-block.tb-go h4::before { background: var(--track-go); }
+  .track-block ul { margin: 0; padding-left: 18px; font-size: 0.94rem; }
+  .track-block li { margin-bottom: 5px; }
+
+  .phase-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 28px;
+    margin-top: 18px;
+  }
+  @media (max-width: 680px) {
+    .phase-grid { grid-template-columns: 1fr; }
+    .timeline-nav { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .resources-box {
+    background: var(--surface-2);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 0.86rem;
+  }
+  .resources-box h4 { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); margin: 0 0 8px; }
+  .resources-box ul { margin: 0; padding-left: 16px; }
+  .resources-box li { margin-bottom: 5px; color: var(--ink-soft); }
+  .resources-box em { color: var(--ink); font-style: normal; font-weight: 500; }
+
+  .project-box {
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .project-box h4 { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin: 0 0 8px; }
+  .project-box p { margin: 0; font-size: 0.94rem; }
+
+  .checkpoint-list { list-style: none; padding: 0; margin: 0; }
+  .checkpoint-item { display: flex; align-items: flex-start; gap: 9px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .checkpoint-item:last-child { border-bottom: none; }
+  .checkpoint-item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 17px; height: 17px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    border: 1.6px solid var(--ink-faint);
+    border-radius: 4px;
+    background: var(--surface);
+    cursor: pointer;
+    position: relative;
+  }
+  .checkpoint-item input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .checkpoint-item input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px; top: 1.5px;
+    width: 4px; height: 8px;
+    border: solid var(--surface);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .checkpoint-text { font-family: var(--font-display); font-size: 0.9rem; color: var(--ink); cursor: pointer; }
+  .checkpoint-item:has(input:checked) .checkpoint-text { color: var(--ink-faint); text-decoration: line-through; }
+
+  .cross-note {
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: var(--accent-soft);
+    border-radius: 6px;
+    font-size: 0.88rem;
+    color: var(--ink);
+  }
+  .cross-note strong { color: var(--accent); font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+
+  /* ---------- Intersections summary ---------- */
+  .intersections { margin: 44px 0; }
+  .intersections h2 { font-size: 1.4rem; margin-bottom: 16px; }
+  .intersections ul { padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .intersections li {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 14px;
+    align-items: baseline;
+    font-size: 0.94rem;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .intersections li:last-child { border-bottom: none; }
+  .intersections .ix-phase { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em; }
+  .intersections .ix-text { color: var(--ink-soft); }
+  .intersections .ix-text strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Final checklist ---------- */
+  .final-checklist { margin: 48px 0 20px; }
+  .final-checklist h2 { font-size: 1.5rem; margin-bottom: 6px; }
+  .final-checklist .sub { color: var(--ink-soft); margin: 0 0 22px; max-width: 62ch; }
+  .asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 620px) { .asset-grid { grid-template-columns: 1fr; } }
+  .asset-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  .asset-card .asset-num { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent); letter-spacing: 0.05em; }
+  .asset-card h3 { font-size: 1.05rem; margin: 6px 0 8px; }
+  .asset-card p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+
+  footer {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+  }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <p class="eyebrow">A six-month build plan &middot; ~10&ndash;15 hrs/week</p>
+    <h1>Route &amp; Ship</h1>
+    <p class="dek">One compounding system, not a pile of tutorials: a Go gateway that routes between AWS Bedrock and a homelab GPU, fronting a Python RAG service — built across six interleaved phases that touch AWS, AI engineering, and advanced Go/Python at once.</p>
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-value" id="progress-count">0/26</span><span class="stat-label">checkpoints cleared</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+  </header>
+
+  <section class="principle-callout">
+    <p class="eyebrow">Operating rule</p>
+    <p>You already know your failure mode is spreading thin across experiments instead of finishing a few. So: one flagship system, evolved for 26 weeks, is the only project on this roadmap. If you get the itch to spin up a new framework or a shiny side-repo mid-phase, write it on a "later" list and keep building the gateway. Every new idea gets evaluated by one question: does this make the existing system better, or is it a new thing to finish? Only the first kind gets built now.</p>
+  </section>
+
+  <section class="architecture">
+    <h2>What you're actually building</h2>
+    <p class="sub">The same two services grow more capable every phase — they never get thrown away and restarted. This is the shape by the end of Phase 2, once routing and streaming are in place.</p>
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram: a client calls a Go gateway, which routes to AWS Bedrock, a homelab Ollama instance, or a Python RAG assistant; the assistant reads from S3 and pgvector on RDS.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"></path>
+          </marker>
+        </defs>
+
+        <!-- Client -->
+        <rect class="node-rect" x="20" y="172" width="110" height="56" rx="5" style="stroke:var(--ink-faint)"></rect>
+        <text class="node-title" x="75" y="196" text-anchor="middle">Client</text>
+        <text class="node-sub" x="75" y="212" text-anchor="middle">browser / CLI</text>
+
+        <!-- Go Gateway -->
+        <rect class="node-rect" x="200" y="165" width="160" height="70" rx="5" style="stroke:var(--track-go)"></rect>
+        <text class="node-title" x="280" y="193" text-anchor="middle">Go Gateway</text>
+        <text class="node-sub" x="280" y="209" text-anchor="middle">ECS Fargate</text>
+        <text class="node-sub" x="280" y="222" text-anchor="middle">route · stream · cache</text>
+
+        <!-- Bedrock -->
+        <rect class="node-rect" x="460" y="40" width="190" height="60" rx="5" style="stroke:var(--track-aws)"></rect>
+        <text class="node-title" x="555" y="66" text-anchor="middle">AWS Bedrock</text>
+        <text class="node-sub" x="555" y="82" text-anchor="middle">Claude · Titan embeddings</text>
+
+        <!-- Homelab Ollama -->
+        <rect class="node-rect" x="460" y="170" width="190" height="60" rx="5" style="stroke:var(--track-ai)"></rect>
+        <text class="node-title" x="555" y="196" text-anchor="middle">Homelab · Ollama</text>
+        <text class="node-sub" x="555" y="212" text-anchor="middle">RTX 5080, via Tailscale</text>
+
+        <!-- Python Assistant -->
+        <rect class="node-rect" x="460" y="300" width="190" height="60" rx="5" style="stroke:var(--track-ai)"></rect>
+        <text class="node-title" x="555" y="326" text-anchor="middle">RAG Assistant</text>
+        <text class="node-sub" x="555" y="342" text-anchor="middle">Python · FastAPI on Lambda</text>
+
+        <!-- S3 -->
+        <rect class="node-rect" x="730" y="272" width="140" height="46" rx="5" style="stroke:var(--track-aws)"></rect>
+        <text class="node-title" x="800" y="300" text-anchor="middle">S3 · source docs</text>
+
+        <!-- pgvector -->
+        <rect class="node-rect" x="730" y="330" width="140" height="46" rx="5" style="stroke:var(--track-aws)"></rect>
+        <text class="node-title" x="800" y="358" text-anchor="middle">RDS · pgvector</text>
+
+        <!-- Edges -->
+        <path class="edge" d="M130,200 L198,200" marker-end="url(#arrow)"></path>
+        <path class="edge" d="M360,180 L458,70" marker-end="url(#arrow)"></path>
+        <path class="edge" d="M360,200 L458,200" marker-end="url(#arrow)"></path>
+        <path class="edge" d="M360,220 L458,325" marker-end="url(#arrow)"></path>
+        <path class="edge" d="M650,320 L728,300" marker-end="url(#arrow)"></path>
+        <path class="edge" d="M650,335 L728,350" marker-end="url(#arrow)"></path>
+      </svg>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--track-go)"></span>Go track</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--track-aws)"></span>AWS track</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--track-ai)"></span>AI engineering track</span>
+    </div>
+  </section>
+
+  <ul class="timeline-nav">
+    <li><a href="#phase-0"><span class="tn-phase">Phase 0</span><span class="tn-weeks">Weeks 1&ndash;2</span><span class="tn-dots"><span class="tn-dot" style="background:var(--track-aws)"></span><span class="tn-dot" style="background:var(--track-go)"></span><span class="tn-dot" style="background:var(--track-ai)"></span></span></a></li>
+    <li><a href="#phase-1"><span class="tn-phase">Phase 1</span><span class="tn-weeks">Weeks 3&ndash;6</span><span class="tn-dots"><span class="tn-dot" style="background:var(--track-aws)"></span><span class="tn-dot" style="background:var(--track-ai)"></span></span></a></li>
+    <li><a href="#phase-2"><span class="tn-phase">Phase 2</span><span class="tn-weeks">Weeks 7&ndash;10</span><span class="tn-dots"><span class="tn-dot" style="background:var(--track-go)"></span><span class="tn-dot" style="background:var(--track-aws)"></span><span class="tn-dot" style="background:var(--track-ai)"></span></span></a></li>
+    <li><a href="#phase-3"><span class="tn-phase">Phase 3</span><span class="tn-weeks">Weeks 11&ndash;15</span><span class="tn-dots"><span class="tn-dot" style="background:var(--track-ai)"></span><span class="tn-dot" style="background:var(--track-aws)"></span></span></a></li>
+    <li><a href="#phase-4"><span class="tn-phase">Phase 4</span><span class="tn-weeks">Weeks 16&ndash;20</span><span class="tn-dots"><span class="tn-dot" style="background:var(--track-aws)"></span><span class="tn-dot" style="background:var(--track-go)"></span><span class="tn-dot" style="background:var(--track-ai)"></span></span></a></li>
+    <li><a href="#phase-5"><span class="tn-phase">Phase 5</span><span class="tn-weeks">Weeks 21&ndash;26</span><span class="tn-dots"><span class="tn-dot" style="background:var(--track-aws)"></span><span class="tn-dot" style="background:var(--track-go)"></span><span class="tn-dot" style="background:var(--track-ai)"></span></span></a></li>
+  </ul>
+
+  <!-- PHASE 0 -->
+  <section class="phase" id="phase-0">
+    <div class="phase-head">
+      <span class="phase-number">Phase 0</span>
+      <span class="phase-weeks">Weeks 1&ndash;2</span>
+      <h3>Foundations &amp; first deploy</h3>
+    </div>
+    <div class="pills"><span class="pill pill-aws">AWS</span><span class="pill pill-go">Go</span><span class="pill pill-ai">Python</span></div>
+    <p class="phase-focus">Get the AWS account and IAM sane, refresh Go/Python project hygiene, and prove the deploy pipeline exists before the real system does. Nothing clever yet &mdash; just plumbing.</p>
+
+    <div class="phase-grid">
+      <div>
+        <div class="track-block tb-aws">
+          <h4>AWS</h4>
+          <ul>
+            <li>Dedicated dev account, IAM Identity Center role (not root), MFA on everything.</li>
+            <li>A Budget + billing alarm at ~$100 and ~$150/mo &mdash; alerts, not a hard cap, matching your "spend when justified" comfort zone.</li>
+            <li>AWS CLI v2 configured, boto3 and aws-sdk-go-v2 installed.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-go">
+          <h4>Go</h4>
+          <ul>
+            <li>Idiomatic layout (<em>cmd/</em>, <em>internal/</em>), modules, <em>golangci-lint</em>, <em>go test ./...</em> wired into CI.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-ai">
+          <h4>Python</h4>
+          <ul>
+            <li><em>uv</em> for env/deps, <em>ruff</em> + <em>mypy</em>, src-layout package.</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="project-box">
+          <h4>Ships this phase</h4>
+          <p>Two scaffolded repos &mdash; <em>gateway</em> (Go) and <em>assistant</em> (Python) &mdash; each deployed as a trivial hello-world on AWS (Lambda + API Gateway for the assistant, one Fargate run for the gateway), with GitHub Actions redeploying on push to main.</p>
+        </div>
+        <ul class="checkpoint-list">
+          <li class="checkpoint-item"><input type="checkbox" id="p0-c1"><label class="checkpoint-text" for="p0-c1">I can explain IAM user vs. role vs. policy without looking it up.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p0-c2"><label class="checkpoint-text" for="p0-c2">A <code>git push</code> to main redeploys something to AWS with no console clicks.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p0-c3"><label class="checkpoint-text" for="p0-c3">Both repos run tests in CI, even trivial ones.</label></li>
+        </ul>
+      </div>
+    </div>
+    <div class="resources-box">
+      <h4>Resources</h4>
+      <ul>
+        <li><em>AWS Skill Builder</em> (free) &mdash; "Getting Started as a Builder" track, plus the IAM best-practices guide.</li>
+        <li><em>Effective Go</em> and the first two chapters of <em>100 Go Mistakes and How to Avoid Them</em> (Teiva Harsanyi).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="phase" id="phase-1">
+    <div class="phase-head">
+      <span class="phase-number">Phase 1</span>
+      <span class="phase-weeks">Weeks 3&ndash;6</span>
+      <h3>Core AWS dev services &amp; RAG v0</h3>
+    </div>
+    <div class="pills"><span class="pill pill-aws">AWS</span><span class="pill pill-ai">AI</span></div>
+    <p class="phase-focus">Learn the AWS services you'll touch constantly, and get a naive but real retrieval pipeline answering questions end-to-end &mdash; on a corpus you actually care about, since you'll build eval questions against it later.</p>
+
+    <div class="phase-grid">
+      <div>
+        <div class="track-block tb-aws">
+          <h4>AWS</h4>
+          <ul>
+            <li>S3 for source docs, Lambda + API Gateway for the assistant, CloudWatch Logs.</li>
+            <li>pgvector on RDS for the vector store &mdash; SQL is already home turf for you, so this is the lowest-friction way in versus a new managed vector product.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-ai">
+          <h4>AI</h4>
+          <ul>
+            <li>Enable Bedrock model access (Claude + Titan embeddings). Chunk a real corpus, embed it, retrieve top-k, stuff into a prompt, generate an answer.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-go">
+          <h4>Go</h4>
+          <ul>
+            <li>Gateway skeleton: a plain <em>net/http</em> reverse proxy to the RAG endpoint. Typed config struct (no scattered <em>os.Getenv</em>), <em>log/slog</em> for structured logs.</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="project-box">
+          <h4>Ships this phase</h4>
+          <p><strong>RAG v0</strong> &mdash; a live, working "ask a question about my own docs" endpoint on Lambda + API Gateway, callable through the Go proxy.</p>
+        </div>
+        <ul class="checkpoint-list">
+          <li class="checkpoint-item"><input type="checkbox" id="p1-c1"><label class="checkpoint-text" for="p1-c1">RAG v0 answers a real question correctly from a live AWS endpoint, not localhost.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p1-c2"><label class="checkpoint-text" for="p1-c2">I can explain how my chunk size/overlap choice affects retrieval quality.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p1-c3"><label class="checkpoint-text" for="p1-c3">The Go proxy forwards a request through and returns the answer.</label></li>
+        </ul>
+      </div>
+    </div>
+    <div class="resources-box">
+      <h4>Resources</h4>
+      <ul>
+        <li>Chip Huyen, <em>AI Engineering</em> (O'Reilly) &mdash; foundations and RAG chapters.</li>
+        <li><em>anthropic-cookbook</em> on GitHub &mdash; RAG examples you can run against Bedrock's Claude models directly.</li>
+        <li>AWS docs: Lambda developer guide, RDS pgvector, Bedrock Runtime API reference.</li>
+      </ul>
+    </div>
+    <div class="cross-note"><strong>Where this crosses tracks</strong>A managed AWS compute service (Lambda) is now the runtime for your AI logic &mdash; deploying it, not just calling an API from your laptop, is the actual AWS+AI skill hiring managers mean by "productionizing LLM apps."</div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="phase" id="phase-2">
+    <div class="phase-head">
+      <span class="phase-number">Phase 2</span>
+      <span class="phase-weeks">Weeks 7&ndash;10</span>
+      <h3>Advanced Go, streaming, and the homelab comes online</h3>
+    </div>
+    <div class="pills"><span class="pill pill-go">Go</span><span class="pill pill-aws">AWS</span><span class="pill pill-ai">AI</span></div>
+    <p class="phase-focus">This is where Go gets genuinely advanced, and where the RTX 5080 stops being a side experiment and becomes part of the architecture.</p>
+
+    <div class="phase-grid">
+      <div>
+        <div class="track-block tb-go">
+          <h4>Go</h4>
+          <ul>
+            <li>Goroutines/channels/context cancellation, worker pools, <em>-race</em> as a standing habit.</li>
+            <li>Streaming HTTP responses (SSE/chunked) so tokens stream through the gateway.</li>
+            <li>Table-driven + <em>testcontainers-go</em> tests; multi-stage Dockerfile.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-aws">
+          <h4>AWS</h4>
+          <ul>
+            <li>Real ECS Fargate service behind an ALB with health checks; secrets in Secrets Manager, not env vars.</li>
+            <li><em>Optional stretch:</em> mirror one component on EKS, purely to make your existing K8s knowledge transfer explicit and bloggable.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-ai">
+          <h4>AI &amp; homelab</h4>
+          <ul>
+            <li>Ollama on the homelab behind a stable endpoint (Tailscale), reachable from the AWS-deployed gateway.</li>
+            <li>Routing logic: cheap/short queries to local Ollama, complex ones to Bedrock &mdash; same code path either way.</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="project-box">
+          <h4>Ships this phase</h4>
+          <p>The gateway now <strong>streams tokens</strong> and <strong>routes between two real backends</strong> &mdash; AWS Bedrock and your home GPU &mdash; running as a real ECS service.</p>
+        </div>
+        <ul class="checkpoint-list">
+          <li class="checkpoint-item"><input type="checkbox" id="p2-c1"><label class="checkpoint-text" for="p2-c1">The gateway streams tokens from both Bedrock and homelab Ollama through the same code path.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p2-c2"><label class="checkpoint-text" for="p2-c2">I've found and fixed a real concurrency bug with <em>-race</em> or a stress test, and can explain it.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p2-c3"><label class="checkpoint-text" for="p2-c3">The AWS-deployed gateway reliably reaches the homelab, and I can explain the networking setup.</label></li>
+        </ul>
+      </div>
+    </div>
+    <div class="resources-box">
+      <h4>Resources</h4>
+      <ul>
+        <li><em>100 Go Mistakes</em> &mdash; concurrency chapters; the Go blog's "Advanced Go Concurrency Patterns."</li>
+        <li>Alex Edwards, <em>Let's Go Further</em> &mdash; production HTTP service structure in Go.</li>
+      </ul>
+    </div>
+    <div class="cross-note"><strong>Where this crosses tracks</strong>Streaming spans all three: Go's concurrency primitives carry tokens from an AI backend that's sometimes on AWS and sometimes on your own hardware. The cost/latency contrast between those two paths is a differentiator almost nobody else in an interview pool will have.</div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="phase" id="phase-3">
+    <div class="phase-head">
+      <span class="phase-number">Phase 3</span>
+      <span class="phase-weeks">Weeks 11&ndash;15</span>
+      <h3>Real RAG depth, evals, and infrastructure as code</h3>
+    </div>
+    <div class="pills"><span class="pill pill-ai">AI</span><span class="pill pill-aws">AWS</span></div>
+    <p class="phase-focus">Move past "it works on my one test question" to something you can defend with numbers, and stop clicking around the console.</p>
+
+    <div class="phase-grid">
+      <div>
+        <div class="track-block tb-ai">
+          <h4>AI</h4>
+          <ul>
+            <li>Chunking experiments (fixed vs. semantic vs. recursive), hybrid search, re-ranking.</li>
+            <li>A first agentic loop: the model decides to search vs. answer directly.</li>
+            <li>An evals harness &mdash; a golden 20&ndash;30 question set, scored automatically, tracked over time.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-aws">
+          <h4>AWS</h4>
+          <ul>
+            <li>Rewrite the entire stack as AWS CDK in Python (doubles as Python practice) &mdash; gateway, assistant, vector store, networking, IAM, all reproducible from code.</li>
+            <li>Real CI/CD: tests, image build, IaC deploy on merge to main.</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="project-box">
+          <h4>Ships this phase</h4>
+          <p><strong>RAG v1</strong> with a measured eval score, and the entire system defined as code.</p>
+        </div>
+        <ul class="checkpoint-list">
+          <li class="checkpoint-item"><input type="checkbox" id="p3-c1"><label class="checkpoint-text" for="p3-c1">I can tear the stack down and rebuild it from IaC alone, no manual console steps.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p3-c2"><label class="checkpoint-text" for="p3-c2">I have a numeric eval score and can point to one change that measurably moved it.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p3-c3"><label class="checkpoint-text" for="p3-c3">The agent correctly decides "search vs. answer directly" on 90%+ of a held-out test set.</label></li>
+        </ul>
+      </div>
+    </div>
+    <div class="resources-box">
+      <h4>Resources</h4>
+      <ul>
+        <li><em>AI Engineering</em> (Huyen) &mdash; evaluation chapters; <em>ragas</em> or <em>promptfoo</em> docs.</li>
+        <li>Eugene Yan (eugeneyan.com) &mdash; applied writing on RAG evaluation specifically.</li>
+        <li>AWS CDK Python docs and workshop.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PHASE 4 -->
+  <section class="phase" id="phase-4">
+    <div class="phase-head">
+      <span class="phase-number">Phase 4</span>
+      <span class="phase-weeks">Weeks 16&ndash;20</span>
+      <h3>Observability, reliability, security, cost</h3>
+    </div>
+    <div class="pills"><span class="pill pill-aws">AWS</span><span class="pill pill-go">Go</span><span class="pill pill-ai">AI</span></div>
+    <p class="phase-focus">Make it defensible in an interview as "production-ish," not just "it runs." Almost everything here is intersection work.</p>
+
+    <div class="phase-grid">
+      <div>
+        <div class="track-block tb-aws">
+          <h4>AWS</h4>
+          <ul>
+            <li>CloudWatch dashboards/alarms on latency, error rate, and cost; X-Ray tracing across the whole request path.</li>
+            <li>Bedrock Guardrails or a manual filter against prompt injection &mdash; this system takes arbitrary user text.</li>
+            <li>An IAM audit pass, and a real cost breakdown: what routing to the homelab actually saves vs. all-Bedrock.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-go">
+          <h4>Go</h4>
+          <ul>
+            <li>Load test the gateway (k6/vegeta), fix what breaks under concurrency.</li>
+            <li>Add a semantic cache to dedupe near-identical queries &mdash; a real concurrency-safe cache design problem.</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="project-box">
+          <h4>Ships this phase</h4>
+          <p>Dashboards and traces showing real (even synthetic load-test) traffic end to end, plus a documented before/after cost number.</p>
+        </div>
+        <ul class="checkpoint-list">
+          <li class="checkpoint-item"><input type="checkbox" id="p4-c1"><label class="checkpoint-text" for="p4-c1">I can show one request's trace across every hop with real latency numbers.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p4-c2"><label class="checkpoint-text" for="p4-c2">I've load-tested the gateway, found a real breaking point, and fixed it.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p4-c3"><label class="checkpoint-text" for="p4-c3">I have an actual dollar figure for what homelab routing saves per month &mdash; not a guess.</label></li>
+        </ul>
+      </div>
+    </div>
+    <div class="resources-box">
+      <h4>Resources</h4>
+      <ul>
+        <li>AWS Well-Architected Framework &mdash; Reliability and Cost Optimization pillars.</li>
+        <li>Bedrock Guardrails docs; k6 docs for load testing.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PHASE 5 -->
+  <section class="phase" id="phase-5">
+    <div class="phase-head">
+      <span class="phase-number">Phase 5</span>
+      <span class="phase-weeks">Weeks 21&ndash;26</span>
+      <h3>Polish, publish, contribute</h3>
+    </div>
+    <div class="pills"><span class="pill pill-aws">AWS</span><span class="pill pill-go">Go</span><span class="pill pill-ai">AI</span></div>
+    <p class="phase-focus">Convert five months of real engineering into artifacts a hiring manager will actually encounter and read.</p>
+
+    <div class="phase-grid">
+      <div>
+        <div class="track-block tb-aws">
+          <h4>Publish</h4>
+          <ul>
+            <li>3&ndash;4 blog posts: system architecture; the homelab-vs-Bedrock cost/latency showdown with real numbers; Go concurrency lessons; how you built and trust your RAG evals.</li>
+            <li>A short demo GIF/video at the top of the main README.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-go">
+          <h4>Contribute</h4>
+          <ul>
+            <li>One real, small, non-trivial PR to a project you actually used building this &mdash; an SDK example, an Ollama tooling repo, <em>ragas</em>, whatever you genuinely touched.</li>
+          </ul>
+        </div>
+        <div class="track-block tb-ai">
+          <h4>Package</h4>
+          <ul>
+            <li>A one-page case study: what it does, one architecture diagram, 4&ndash;5 metrics that matter (p50/p95 latency, eval score, cost/month, cost saved by local routing).</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="project-box">
+          <h4>Final self-interview</h4>
+          <p>Could you whiteboard this system cold and defend every decision &mdash; why Fargate and not just Lambda for the gateway, why pgvector and not OpenSearch, why this particular Go concurrency pattern &mdash; in a live interview?</p>
+        </div>
+        <ul class="checkpoint-list">
+          <li class="checkpoint-item"><input type="checkbox" id="p5-c1"><label class="checkpoint-text" for="p5-c1">Both repos have READMEs a stranger could clone and run, with a demo GIF/video up top.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p5-c2"><label class="checkpoint-text" for="p5-c2">The live demo is up and I know exactly what it costs per month.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p5-c3"><label class="checkpoint-text" for="p5-c3">At least two of the planned blog posts are published.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p5-c4"><label class="checkpoint-text" for="p5-c4">My open-source contribution is submitted &mdash; merged or not, submitted is the bar.</label></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="intersections">
+    <h2>Where the tracks actually meet</h2>
+    <ul>
+      <li><span class="ix-phase">Phase 1</span><span class="ix-text"><strong>AWS + AI</strong> &mdash; the RAG service's runtime is a managed AWS compute product (Lambda), not a script on your laptop. Deploying it is the skill, not calling the model.</span></li>
+      <li><span class="ix-phase">Phase 2</span><span class="ix-text"><strong>Go + AWS + AI</strong> &mdash; token streaming runs through Go's concurrency primitives, across a network hop that sometimes lands on Bedrock and sometimes on your own GPU.</span></li>
+      <li><span class="ix-phase">Phase 3</span><span class="ix-text"><strong>AWS + AI</strong> &mdash; infrastructure-as-code makes the AI system reproducible; evals make it measurable. Neither means much without the other.</span></li>
+      <li><span class="ix-phase">Phase 4</span><span class="ix-text"><strong>All three</strong> &mdash; observability instruments the Go service, the AI calls, and the AWS infrastructure as one continuous trace, and the cost analysis only exists because you built the homelab routing path in Go.</span></li>
+    </ul>
+  </section>
+
+  <section class="final-checklist">
+    <h2>The four things you should end up with</h2>
+    <p class="sub">Everything above should compress into these &mdash; the assets that actually get read before or during an interview.</p>
+    <div class="asset-grid">
+      <div class="asset-card">
+        <span class="asset-num">01</span>
+        <h3>The flagship system</h3>
+        <p>Two public repos, a live demo, full IaC, real READMEs. Proves you can design, build, and operate a distributed system across AWS, advanced Go, and applied AI &mdash; not follow a tutorial.</p>
+      </div>
+      <div class="asset-card">
+        <span class="asset-num">02</span>
+        <h3>The blog series</h3>
+        <p>3&ndash;4 posts, especially the homelab-vs-cloud cost/latency piece. Proves engineering judgment and communication, and gives you a story nobody else in the interview pool has.</p>
+      </div>
+      <div class="asset-card">
+        <span class="asset-num">03</span>
+        <h3>The one-page case study</h3>
+        <p>Architecture diagram plus 4&ndash;5 real metrics. The artifact a recruiter or hiring manager actually reads in the 30 seconds before a call.</p>
+      </div>
+      <div class="asset-card">
+        <span class="asset-num">04</span>
+        <h3>The open-source contribution</h3>
+        <p>One real, landed (or at least submitted) PR to a project you genuinely used. Proves you can operate in someone else's codebase under review.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>Route &amp; Ship &middot; check-state saved locally in your browser</footer>
+</div>
+
+<script>
+(function () {
+  var KEY = 'route-and-ship-progress-v1';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.checkpoint-item input[type="checkbox"]'));
+  var countEl = document.getElementById('progress-count');
+  var fillEl = document.getElementById('progress-fill');
+
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { if (b.checked) done++; });
+    countEl.textContent = done + '/' + boxes.length;
+    fillEl.style.width = (boxes.length ? (done / boxes.length * 100) : 0) + '%';
+  }
+
+  boxes.forEach(function (b) {
+    if (state[b.id]) b.checked = true;
+    b.addEventListener('change', function () {
+      state[b.id] = b.checked;
+      localStorage.setItem(KEY, JSON.stringify(state));
+      update();
+    });
+  });
+
+  update();
+})();
+</script>
