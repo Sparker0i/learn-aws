@@ -1,0 +1,58 @@
+name: gateway-ci
+on:
+  push:
+    branches: [main]
+    paths: ['gateway/**']
+  pull_request:
+    paths: ['gateway/**']
+
+defaults:
+  run:
+    working-directory: gateway
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: gateway/go.mod
+          cache: true
+          cache-dependency-path: gateway/go.sum
+      - run: go vet ./...
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: gateway
+      - run: go test ./... -race
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::186599549641:role/github-actions-deploy
+          aws-region: us-east-1
+      - id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: gateway
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.ecr-login.outputs.registry }}/gateway:latest
+      - name: Run task on Fargate
+        run: |
+          aws ecs run-task \
+            --cluster route-and-ship \
+            --launch-type FARGATE \
+            --task-definition gateway \
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-5d19d072],securityGroups=[sg-5302cd26],assignPublicIp=ENABLED}"

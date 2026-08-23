@@ -1,0 +1,54 @@
+name: assistant-ci
+on:
+  push:
+    branches: [main]
+    paths: ['assistant/**']
+  pull_request:
+    paths: ['assistant/**']
+
+defaults:
+  run:
+    working-directory: assistant
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --dev
+      - run: uv run ruff check .
+      - run: uv run mypy src
+      - run: uv run pytest
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::186599549641:role/github-actions-deploy
+          aws-region: us-east-1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install -g aws-cdk
+      - name: Package handler into dist/
+        run: |
+          mkdir -p dist
+          cp src/assistant/app.py dist/
+      - name: cdk deploy
+        working-directory: assistant/infra
+        run: |
+          pip install -r requirements.txt
+          cdk deploy --require-approval never
