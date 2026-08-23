@@ -672,7 +672,15 @@ aws iam create-open-id-connect-provider \
 
 That thumbprint is GitHub's OIDC root CA thumbprint — a fixed, well-known value for this specific provider, not something to compute yourself.
 
-Now the trust policy — the part that actually enforces "only this repo, only this branch." The `sub` condition below rejects an assume-role attempt from anywhere else, including a PR from a fork or a different branch. Since `gateway` and `assistant` are directories in one monorepo rather than separate repos, `<you>/<repo>` here is your one actual GitHub repo (e.g. `<you>/learn-aws`) — **not** `<you>/gateway` — and this whole step runs once, not once per project:
+Now the trust policy — the part that actually enforces "only this repo, only this branch." The `sub` condition below rejects an assume-role attempt from anywhere else, including a PR from a fork or a different branch. Since `gateway` and `assistant` are directories in one monorepo rather than separate repos, this whole step runs once, not once per project.
+
+Here's the part that will genuinely trip you up, confirmed by decoding a real token rather than trusting documentation: the `sub` claim GitHub actually issues is **not** the classic `repo:owner/repo:ref:refs/heads/main` format most guides (including earlier drafts of this one) assume. It's:
+
+```
+repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/main
+```
+
+GitHub now appends the account's and repository's immutable numeric IDs after their names — almost certainly to close a real gap: without the IDs, a renamed username or a transferred/renamed repo could let a *different* future owner of that same name silently inherit trust that was meant for the original. The names alone are no longer enough to identify "this repo" permanently. There's no way to know your account's and repo's numeric IDs without either looking them up or — more reliably — just decoding a token GitHub actually issues, so build the trust policy with wildcards for the ID portions rather than guessing exact numbers:
 
 ```bash
 cat > trust-policy.json <<EOF
@@ -690,7 +698,7 @@ cat > trust-policy.json <<EOF
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:<you>/<repo>:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub": "repo:<you>@*/<repo>@*:ref:refs/heads/main"
         }
       }
     }
@@ -705,7 +713,17 @@ aws iam attach-role-policy --role-name github-actions-deploy \
   --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
 ```
 
-Double-check the `sub` value actually landed correctly — a literal, un-substituted `<you>/<repo>` in a pasted command is an easy mistake to make and won't error at creation time, only later, opaquely, when a real deploy tries to assume the role and gets `AccessDenied`.
+If you want to see the real claims for your own repo rather than take this on faith, add a throwaway debug step to any workflow with `id-token: write` permission, run it once, then delete the step:
+
+```yaml
+      - name: DEBUG - decode OIDC token claims
+        run: |
+          TOKEN=$(curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
+          echo "$TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq .
+```
+
+Whichever form you use, double-check the `sub` value actually landed correctly — a leftover literal `<you>/<repo>` placeholder, or the classic format instead of the `@id`-suffixed one, won't error at creation time. It only shows up later, opaquely, when a real deploy tries to assume the role and gets `AccessDenied: Not authorized to perform sts:AssumeRoleWithWebIdentity` — a message that gives no hint the `sub` format itself is the problem.
 
 `AdministratorAccess` on the CI role is the same "start broad, narrow in Phase 4" call as section 1's permission set — the real fix isn't guessing a narrower policy today, it's remembering to actually do the audit later. One role is enough for both `gateway-ci.yml` and `assistant-ci.yml` — they're workflows in the same repo, so they share the same `sub` claim; there's nothing to repeat here.
 
