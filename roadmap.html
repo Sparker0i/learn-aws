@@ -378,9 +378,9 @@
   <header class="hero">
     <p class="eyebrow">A six-month build plan &middot; ~10&ndash;15 hrs/week</p>
     <h1>Route &amp; Ship</h1>
-    <p class="dek">One compounding system, not a pile of tutorials: a Go gateway that routes between AWS Bedrock and a homelab GPU, fronting a Python RAG service — built across six interleaved phases that touch AWS, AI engineering, and advanced Go/Python at once.</p>
+    <p class="dek">One compounding system, not a pile of tutorials: a Go gateway that routes between AWS Bedrock and a homelab GPU, fronting a Python-built SRE incident-response copilot — built across six interleaved phases that touch AWS, AI engineering, and advanced Go/Python at once.</p>
     <div class="stats-bar">
-      <div class="stat"><span class="stat-value" id="progress-count">0/26</span><span class="stat-label">checkpoints cleared</span></div>
+      <div class="stat"><span class="stat-value" id="progress-count">0/27</span><span class="stat-label">checkpoints cleared</span></div>
       <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
   </header>
@@ -394,7 +394,7 @@
     <h2>What you're actually building</h2>
     <p class="sub">The same two services grow more capable every phase — they never get thrown away and restarted. This is the shape by the end of Phase 2, once routing and streaming are in place.</p>
     <div class="diagram-wrap">
-      <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram: a client calls a Go gateway, which routes to AWS Bedrock, a homelab Ollama instance, or a Python RAG assistant; the assistant reads from S3 and pgvector on RDS.">
+      <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram: a client calls a Go gateway, which routes to AWS Bedrock, a homelab Ollama instance, or a Python SRE copilot service; the copilot reads from S3 and pgvector on RDS.">
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"></path>
@@ -424,7 +424,7 @@
 
         <!-- Python Assistant -->
         <rect class="node-rect" x="460" y="300" width="190" height="60" rx="5" style="stroke:var(--track-ai)"></rect>
-        <text class="node-title" x="555" y="326" text-anchor="middle">RAG Assistant</text>
+        <text class="node-title" x="555" y="326" text-anchor="middle">SRE Copilot</text>
         <text class="node-sub" x="555" y="342" text-anchor="middle">Python · FastAPI on Lambda</text>
 
         <!-- S3 -->
@@ -519,10 +519,10 @@
     <div class="phase-head">
       <span class="phase-number">Phase 1</span>
       <span class="phase-weeks">Weeks 3&ndash;6</span>
-      <h3>Core AWS dev services &amp; RAG v0</h3>
+      <h3>Core AWS dev services &amp; SRE Copilot v0</h3>
     </div>
     <div class="pills"><span class="pill pill-aws">AWS</span><span class="pill pill-ai">AI</span></div>
-    <p class="phase-focus">Learn the AWS services you'll touch constantly, and get a naive but real retrieval pipeline answering questions end-to-end &mdash; on a corpus you actually care about, since you'll build eval questions against it later.</p>
+    <p class="phase-focus">Learn the AWS services you'll touch constantly, and get a naive but real retrieval pipeline answering questions end-to-end &mdash; over real incident post-mortems and your own SRE knowledge, so the eval questions you write in Phase 3 are ones you already know the right answer to.</p>
 
     <div class="phase-grid">
       <div>
@@ -536,7 +536,7 @@
         <div class="track-block tb-ai">
           <h4>AI</h4>
           <ul>
-            <li>Enable Bedrock model access (Claude + Titan embeddings). Chunk a real corpus, embed it, retrieve top-k, stuff into a prompt, generate an answer.</li>
+            <li>Enable Bedrock model access (Claude + Titan embeddings). Corpus: public incident post-mortems (Cloudflare, GitHub, AWS, Google) plus your own Kafka/Kubernetes/MySQL/MongoDB failure-mode knowledge. Chunk it, embed it, retrieve top-k, generate an answer.</li>
           </ul>
         </div>
         <div class="track-block tb-go">
@@ -549,10 +549,10 @@
       <div>
         <div class="project-box">
           <h4>Ships this phase</h4>
-          <p><strong>RAG v0</strong> &mdash; a live, working "ask a question about my own docs" endpoint on Lambda + API Gateway, callable through the Go proxy.</p>
+          <p><strong>SRE Copilot v0</strong> &mdash; a live "ask an incident-response question" endpoint on Lambda + API Gateway, answering from real post-mortems, callable through the Go proxy.</p>
         </div>
         <ul class="checkpoint-list">
-          <li class="checkpoint-item"><input type="checkbox" id="p1-c1"><label class="checkpoint-text" for="p1-c1">RAG v0 answers a real question correctly from a live AWS endpoint, not localhost.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p1-c1"><label class="checkpoint-text" for="p1-c1">SRE Copilot v0 answers a real incident-response question correctly from a live AWS endpoint, not localhost.</label></li>
           <li class="checkpoint-item"><input type="checkbox" id="p1-c2"><label class="checkpoint-text" for="p1-c2">I can explain how my chunk size/overlap choice affects retrieval quality.</label></li>
           <li class="checkpoint-item"><input type="checkbox" id="p1-c3"><label class="checkpoint-text" for="p1-c3">The Go proxy forwards a request through and returns the answer.</label></li>
         </ul>
@@ -564,6 +564,7 @@
         <li>Chip Huyen, <em>AI Engineering</em> (O'Reilly) &mdash; foundations and RAG chapters.</li>
         <li><em>anthropic-cookbook</em> on GitHub &mdash; RAG examples you can run against Bedrock's Claude models directly.</li>
         <li>AWS docs: Lambda developer guide, RDS pgvector, Bedrock Runtime API reference.</li>
+        <li>Corpus sourcing: public post-incident reviews from Cloudflare, GitHub, AWS, and Google's own engineering blogs, plus your own Kafka/K8s/MySQL/MongoDB war stories written up as short incident notes.</li>
       </ul>
     </div>
     <div class="cross-note"><strong>Where this crosses tracks</strong>A managed AWS compute service (Lambda) is now the runtime for your AI logic &mdash; deploying it, not just calling an API from your laptop, is the actual AWS+AI skill hiring managers mean by "productionizing LLM apps."</div>
@@ -643,7 +644,7 @@
           <ul>
             <li>Chunking experiments (fixed vs. semantic vs. recursive), hybrid search, re-ranking.</li>
             <li>A first agentic loop: the model decides to search vs. answer directly.</li>
-            <li>An evals harness &mdash; a golden 20&ndash;30 question set, scored automatically, tracked over time.</li>
+            <li>An evals harness &mdash; a golden 20&ndash;30 question set drawn from real incident scenarios you already know the right answer to, scored automatically, tracked over time.</li>
           </ul>
         </div>
         <div class="track-block tb-aws">
@@ -657,7 +658,7 @@
       <div>
         <div class="project-box">
           <h4>Ships this phase</h4>
-          <p><strong>RAG v1</strong> with a measured eval score, and the entire system defined as code.</p>
+          <p><strong>SRE Copilot v1</strong> with a measured eval score, and the entire system defined as code.</p>
         </div>
         <ul class="checkpoint-list">
           <li class="checkpoint-item"><input type="checkbox" id="p3-c1"><label class="checkpoint-text" for="p3-c1">I can tear the stack down and rebuild it from IaC alone, no manual console steps.</label></li>
@@ -696,6 +697,12 @@
             <li>An IAM audit pass, and a real cost breakdown: what routing to the homelab actually saves vs. all-Bedrock.</li>
           </ul>
         </div>
+        <div class="track-block tb-ai">
+          <h4>AI</h4>
+          <ul>
+            <li>Fold the system's own CloudWatch logs and X-Ray traces into the copilot as a second retrieval source, alongside the post-mortem corpus &mdash; it should now answer both "what's the general failure mode for this symptom" and "why was my own gateway slow yesterday."</li>
+          </ul>
+        </div>
         <div class="track-block tb-go">
           <h4>Go</h4>
           <ul>
@@ -707,12 +714,13 @@
       <div>
         <div class="project-box">
           <h4>Ships this phase</h4>
-          <p>Dashboards and traces showing real (even synthetic load-test) traffic end to end, plus a documented before/after cost number.</p>
+          <p>Dashboards and traces showing real (even synthetic load-test) traffic end to end, a documented before/after cost number, and a copilot that can now answer questions about its own operational history.</p>
         </div>
         <ul class="checkpoint-list">
           <li class="checkpoint-item"><input type="checkbox" id="p4-c1"><label class="checkpoint-text" for="p4-c1">I can show one request's trace across every hop with real latency numbers.</label></li>
           <li class="checkpoint-item"><input type="checkbox" id="p4-c2"><label class="checkpoint-text" for="p4-c2">I've load-tested the gateway, found a real breaking point, and fixed it.</label></li>
           <li class="checkpoint-item"><input type="checkbox" id="p4-c3"><label class="checkpoint-text" for="p4-c3">I have an actual dollar figure for what homelab routing saves per month &mdash; not a guess.</label></li>
+          <li class="checkpoint-item"><input type="checkbox" id="p4-c4"><label class="checkpoint-text" for="p4-c4">I can ask the copilot a question about my own system's recent behavior and get a correct, traceable answer.</label></li>
         </ul>
       </div>
     </div>
@@ -740,7 +748,7 @@
         <div class="track-block tb-aws">
           <h4>Publish</h4>
           <ul>
-            <li>3&ndash;4 blog posts: system architecture; the homelab-vs-Bedrock cost/latency showdown with real numbers; Go concurrency lessons; how you built and trust your RAG evals.</li>
+            <li>3&ndash;4 blog posts: system architecture; the homelab-vs-Bedrock cost/latency showdown with real numbers; Go concurrency lessons; how you built and trust the copilot's evals using real incidents you could grade yourself.</li>
             <li>A short demo GIF/video at the top of the main README.</li>
           </ul>
         </div>
@@ -775,7 +783,7 @@
   <section class="intersections">
     <h2>Where the tracks actually meet</h2>
     <ul>
-      <li><span class="ix-phase">Phase 1</span><span class="ix-text"><strong>AWS + AI</strong> &mdash; the RAG service's runtime is a managed AWS compute product (Lambda), not a script on your laptop. Deploying it is the skill, not calling the model.</span></li>
+      <li><span class="ix-phase">Phase 1</span><span class="ix-text"><strong>AWS + AI</strong> &mdash; the copilot's runtime is a managed AWS compute product (Lambda), not a script on your laptop. Deploying it is the skill, not calling the model.</span></li>
       <li><span class="ix-phase">Phase 2</span><span class="ix-text"><strong>Go + AWS + AI</strong> &mdash; token streaming runs through Go's concurrency primitives, across a network hop that sometimes lands on Bedrock and sometimes on your own GPU.</span></li>
       <li><span class="ix-phase">Phase 3</span><span class="ix-text"><strong>AWS + AI</strong> &mdash; infrastructure-as-code makes the AI system reproducible; evals make it measurable. Neither means much without the other.</span></li>
       <li><span class="ix-phase">Phase 4</span><span class="ix-text"><strong>All three</strong> &mdash; observability instruments the Go service, the AI calls, and the AWS infrastructure as one continuous trace, and the cost analysis only exists because you built the homelab routing path in Go.</span></li>
