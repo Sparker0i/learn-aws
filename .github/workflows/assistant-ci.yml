@@ -41,7 +41,7 @@ jobs:
           python-version: '3.14'
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - run: npm install -g aws-cdk
       - name: Package handler into dist/
         run: |

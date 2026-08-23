@@ -24,6 +24,7 @@ jobs:
       - uses: golangci/golangci-lint-action@v6
         with:
           working-directory: gateway
+          version: latest
       - run: go test ./... -race
 
   deploy:

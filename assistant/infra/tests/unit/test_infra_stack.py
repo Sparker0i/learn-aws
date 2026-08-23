@@ -1,15 +1,14 @@
 import aws_cdk as core
 import aws_cdk.assertions as assertions
 
-from infra.infra_stack import InfraStack
+from infra.assistant_stack import AssistantStack
 
-# example tests. To run these tests, uncomment this file along with the example
-# resource in infra/infra_stack.py
-def test_sqs_queue_created():
+
+def test_lambda_function_created():
     app = core.App()
-    stack = InfraStack(app, "infra")
+    stack = AssistantStack(app, "AssistantStack")
     template = assertions.Template.from_stack(stack)
 
-#     template.has_resource_properties("AWS::SQS::Queue", {
-#         "VisibilityTimeout": 300
-#     })
+    template.has_resource_properties("AWS::Lambda::Function", {
+        "Runtime": "python3.14",
+    })

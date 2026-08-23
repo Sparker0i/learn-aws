@@ -305,10 +305,13 @@ jobs:
       - uses: golangci/golangci-lint-action@v6
         with:
           working-directory: gateway
+          version: latest
       - run: go test ./... -race
 EOF
 cd gateway   # back in, for the rest of this section
 ```
+
+That `version: latest` isn't decoration either. Left unset, `golangci-lint-action` falls back to whatever version was current when the action itself was last released — a binary built with an older Go toolchain than the one you're targeting. golangci-lint refuses to run against a Go version newer than the one it was built with, so on a fast-moving Go version like 1.27 you can hit `can't load config: the Go language version (go1.24) used to build golangci-lint is lower than the targeted Go version (1.27.0)` — a failure that has nothing to do with your code, and would otherwise only show up the first time CI actually runs.
 
 `paths: ['gateway/**']` is what keeps a Python-only change from wastefully triggering a Go test run and vice versa (`assistant-ci.yml` gets the matching `assistant/**` filter in section 4). `defaults.run.working-directory: gateway` scopes the plain `run:` steps to the right subdirectory — but it doesn't affect action *inputs*, which is why `go-version-file` and `cache-dependency-path` still need the `gateway/` prefix spelled out explicitly.
 
@@ -376,9 +379,13 @@ cat >> pyproject.toml <<'EOF'
 [tool.ruff]
 line-length = 100
 target-version = "py314"
+extend-exclude = ["infra"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.mypy]
 python_version = "3.14"
@@ -386,7 +393,9 @@ strict = true
 EOF
 ```
 
-`strict = true` on mypy feels aggressive for a hello-world, but it's much cheaper to start strict than retrofit strictness onto a codebase that's already grown a hundred untyped functions by Phase 3.
+`strict = true` on mypy feels aggressive for a hello-world, but it's much cheaper to start strict than retrofit strictness onto a codebase that's already grown a hundred untyped functions by Phase 3. It does mean the handler in section 5 needs real type annotations, not bare `def handler(event, context):` — `strict` rejects an unannotated function outright.
+
+The other two settings exist specifically because of where `infra/` sits. `extend-exclude = ["infra"]` keeps `ruff check .` from also scanning the CDK app — without it, a bare `.` picks up `infra/`'s own imports, its CDK-generated boilerplate test, and whatever pip-managed style choices don't match this project's config, none of which have anything to do with the `assistant` package. `testpaths = ["tests"]` does the same job for pytest: without it, a bare `pytest` invocation from `assistant/` also tries to collect `infra/tests/`, and if that boilerplate test still imports a stack class you've since renamed (section 5 has you do exactly that), you get a collection error that has nothing to do with your actual code.
 
 ### Step 3 — Write a trivial test
 
@@ -448,12 +457,15 @@ This is the file the CDK stack in Step 2 points at — it doesn't exist yet, sin
 
 ```bash
 cat > src/assistant/app.py <<'EOF'
-def handler(event, context):
+from typing import Any
+
+
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     return {"statusCode": 200, "body": "assistant: hello"}
 EOF
 ```
 
-No FastAPI/Mangum wiring yet — a bare Lambda handler function is all this phase needs. That comes in Phase 1, once there's an actual API surface worth routing.
+No FastAPI/Mangum wiring yet — a bare Lambda handler function is all this phase needs. That comes in Phase 1, once there's an actual API surface worth routing. The type annotations aren't decoration: section 4's mypy config runs in `strict` mode, which rejects an unannotated `def handler(event, context):` outright — `Any` is the honest type here anyway, since a Lambda event's shape depends entirely on what triggered it.
 
 ### Step 2 — Set up the CDK app
 
@@ -722,7 +734,7 @@ Both files need a `deploy` job appended, but the two projects deploy in genuinel
           python-version: '3.14'
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - run: npm install -g aws-cdk
       - name: Package handler into dist/
         run: |
