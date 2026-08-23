@@ -2,9 +2,10 @@ name: assistant-ci
 on:
   push:
     branches: [main]
-    paths: ['assistant/**']
+    paths: ['assistant/**', '.github/workflows/assistant-ci.yml']
   pull_request:
-    paths: ['assistant/**']
+    paths: ['assistant/**', '.github/workflows/assistant-ci.yml']
+  workflow_dispatch: {}
 
 defaults:
   run:
